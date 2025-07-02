@@ -2,11 +2,10 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px 
 import plotly.graph_objects as go
-
 import streamlit.components.v1 as components
 import os
 import yaml
-
+import io # C'est la ligne importante qui était manquante !
 
 st.set_page_config(page_title="Tableau de bord", layout="wide")
 
@@ -95,13 +94,7 @@ with tab1:
     col4.metric(label="Moyenne Impayés", value=f"{moyenne_impayés_par_locataire}€")
     col5.metric(label="Pourcentage Impayés Partis", value=f"{pourcentage_locataires_partis:.2f} %")
 
-  
-   
-
     # Graphique des impayés par mois
-    # Création du graphique à barres
-
-    # Graphique des impayés par mois avec effets d'ombre
     fig = px.line(
     dataset_impayés_mois,
     x='SORTIE_MOIS',
@@ -110,8 +103,7 @@ with tab1:
     labels={'SOLDE_DU_CLIENT': 'Montant des Impayés (€)'},
     template='plotly_white'
     )
-   
-
+    
     # Affichage
     st.plotly_chart(fig)
 
@@ -120,9 +112,6 @@ with tab1:
     df_filtré = df_plot_tab1.loc[:, ['IDENTIFIANT_CLIENT', 'SORTIE_MOIS', 'SORTIE_ANNEE', 'SOLDE_DU_CLIENT', 'NOM_IMMEUBLE', 'BAIL_TYPE']]
     df_filtré.rename(columns={'IDENTIFIANT_CLIENT': 'Code client', 'SORTIE_MOIS': 'Mois de sortie', 'SORTIE_ANNEE': 'Années de sortie', 'SOLDE_DU_CLIENT': 'Solde du client', 'NOM_IMMEUBLE': 'Nom de l\'immeuble', 'BAIL_TYPE': 'Type de bail'}, inplace=True)
     st.dataframe(df_filtré, use_container_width=True)
-
-    
-    
 
 # Contenu de tab2
 with tab2:
@@ -136,8 +125,6 @@ with tab2:
     impayés_par_residence = df_plot_tab2.groupby('NOM_IMMEUBLE')['SOLDE_DU_CLIENT'].sum().reset_index()
 
     # Création du graphique
-    # <div class="chart-container">
-   
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=impayés_par_residence['NOM_IMMEUBLE'],
@@ -224,10 +211,9 @@ with tab2:
     Longitude=('Longitude', 'first') # Ajoute la Longitude en prenant la première valeur du groupe
     ).reset_index()
 
-
     #Afficher impayés par ville
- 
-    plot_map = px.scatter_mapbox(
+    # Modification ici : Changement de px.scatter_mapbox à px.scatter_map et ajout de tile_provider
+    plot_map = px.scatter_map( # MODIFIÉ : scatter_mapbox -> scatter_map
     impayés_par_ville,
     lat='Latitude',
     lon='Longitude',
@@ -238,26 +224,41 @@ with tab2:
     zoom=5,                        # Zoom initial (4 est souvent trop dézoomé pour la France)
     height=700,                    # Augmente la hauteur de la carte
     title=f"Carte des Impayés par Ville pour l'année {filtre_annee_tab2}",
-    mapbox_style='open-street-map', # Utilise le style déterminé ci-dessus (Mapbox ou OSM)
+    tile_provider='open-street-map', # MODIFIÉ : mapbox_style -> tile_provider
     color_continuous_scale=px.colors.sequential.Viridis, # Nouvelle palette de couleurs (Plasma, Viridis, Inferno, Magma)
-    opacity=0.6             # Rend les points légèrement transparents pour voir les chevauchements
+    opacity=0.6                    # Rend les points légèrement transparents pour voir les chevauchements
     )
-
     
-
     st.plotly_chart(plot_map, use_container_width=True)
 
+# Contenu de tab3 (placez ici votre code pour les corrélations si vous en avez un)
+with tab3:
+    st.header("Analyse des Corrélations")
+    st.write("Cet onglet est dédié à l'affichage des corrélations entre les variables de vos données.")
+    st.info("Veuillez implémenter le code pour les corrélations ici si vous avez des analyses spécifiques à montrer.")
+    # Exemple de placeholder si vous voulez afficher une heatmap de corrélation
+    # if 'df' in locals() and not df.empty and df.select_dtypes(include='number').columns.any():
+    #     st.subheader("Matrice de Corrélation des variables numériques")
+    #     numerical_df = df.select_dtypes(include='number')
+    #     corr_matrix = numerical_df.corr()
+    #     fig_corr = px.imshow(corr_matrix, text_auto=True, aspect="auto",
+    #                          title="Matrice de Corrélation")
+    #     st.plotly_chart(fig_corr, use_container_width=True)
+    # else:
+    #     st.warning("Pas de données numériques disponibles pour calculer les corrélations ou le DataFrame est vide.")
 
+
+# Contenu de tab4 (Analyse Exploratoire des Données simplifiée)
 with tab4:
     st.header("Analyse Exploratoire des Données (EDA) simple")
     st.write("Cet onglet vous permet d'obtenir un aperçu rapide des données que vous téléchargez. Il n'est pas aussi exhaustif que `ydata-profiling` mais est compatible avec l'environnement Streamlit Cloud.")
 
     with st.sidebar:
-        uploaded_file = st.file_uploader("Télécharger un fichier Excel pour l'analyse", key="uploaded_file_tab4") # Ajout d'une clé unique
+        uploaded_file = st.file_uploader("Télécharger un fichier Excel pour l'analyse", key="uploaded_file_tab4") 
 
     if uploaded_file is not None:
         try:
-            df_uploaded = pd.read_excel(uploaded_file) # Utilisons un nom de variable distinct pour le DataFrame du fichier téléchargé
+            df_uploaded = pd.read_excel(uploaded_file) 
             st.success("Fichier chargé avec succès !")
 
             st.subheader("Aperçu des 5 premières lignes")
@@ -267,7 +268,7 @@ with tab4:
             buffer = io.StringIO()
             df_uploaded.info(buf=buffer)
             s = buffer.getvalue()
-            st.text(s) # Affiche le résumé df.info()
+            st.text(s) 
 
             st.subheader("Statistiques descriptives")
             st.dataframe(df_uploaded.describe(), use_container_width=True)
@@ -277,7 +278,6 @@ with tab4:
             missing_percent = (df_uploaded.isnull().sum() / len(df_uploaded)) * 100
             missing_df = pd.DataFrame({'Nombre de valeurs manquantes': missing_values, 'Pourcentage': missing_percent.round(2)})
             
-            # Filtrer pour n'afficher que les colonnes avec des valeurs manquantes
             st.dataframe(missing_df[missing_df['Nombre de valeurs manquantes'] > 0].sort_values(by='Pourcentage', ascending=False), use_container_width=True)
             if missing_df[missing_df['Nombre de valeurs manquantes'] > 0].empty:
                 st.info("Aucune valeur manquante détectée dans ce jeu de données.")
@@ -285,11 +285,10 @@ with tab4:
             st.subheader("Types de données par colonne")
             st.dataframe(df_uploaded.dtypes.astype(str).reset_index().rename(columns={'index': 'Colonne', 0: 'Type de Données'}), use_container_width=True)
 
-            # Optionnel : Afficher des histogrammes pour quelques colonnes numériques
             st.subheader("Distribution de quelques colonnes numériques (pour les 5 premières)")
             numerical_cols = df_uploaded.select_dtypes(include=['number']).columns
             if not numerical_cols.empty:
-                for col in numerical_cols[:5]: # Afficher max 5 histogrammes pour ne pas surcharger la page
+                for col in numerical_cols[:5]: 
                     fig = px.histogram(df_uploaded, x=col, title=f"Distribution de **{col}**")
                     st.plotly_chart(fig, use_container_width=True)
             else:
@@ -300,6 +299,3 @@ with tab4:
             st.info("Veuillez vous assurer que le fichier est un fichier Excel valide.")
     else:
         st.info("Veuillez télécharger un fichier Excel pour commencer l'analyse.")
-
-            
-
