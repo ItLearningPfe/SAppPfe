@@ -2,8 +2,7 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px 
 import plotly.graph_objects as go
-from ydata_profiling import ProfileReport
-from streamlit_pandas_profiling import st_profile_report
+
 import streamlit.components.v1 as components
 import os
 import yaml
