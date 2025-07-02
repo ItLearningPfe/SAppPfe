@@ -249,36 +249,57 @@ with tab2:
 
 
 with tab4:
+    st.header("Analyse Exploratoire des Données (EDA) simple")
+    st.write("Cet onglet vous permet d'obtenir un aperçu rapide des données que vous téléchargez. Il n'est pas aussi exhaustif que `ydata-profiling` mais est compatible avec l'environnement Streamlit Cloud.")
 
     with st.sidebar:
-        uploaded_file = st.file_uploader("Télécharger un fichier Excel pour le profiling")
-        
+        uploaded_file = st.file_uploader("Télécharger un fichier Excel pour l'analyse", key="uploaded_file_tab4") # Ajout d'une clé unique
 
     if uploaded_file is not None:
-        df = pd.read_excel(uploaded_file)
-        with st.spinner("Génération du rapport de profiling avec Pandas Profiling..."):
-             # Chemin vers votre fichier de configuration YAML
-            config_file_path = "profiling_config.yaml"
+        try:
+            df_uploaded = pd.read_excel(uploaded_file) # Utilisons un nom de variable distinct pour le DataFrame du fichier téléchargé
+            st.success("Fichier chargé avec succès !")
+
+            st.subheader("Aperçu des 5 premières lignes")
+            st.dataframe(df_uploaded.head(), use_container_width=True)
+
+            st.subheader("Informations générales sur les données")
+            buffer = io.StringIO()
+            df_uploaded.info(buf=buffer)
+            s = buffer.getvalue()
+            st.text(s) # Affiche le résumé df.info()
+
+            st.subheader("Statistiques descriptives")
+            st.dataframe(df_uploaded.describe(), use_container_width=True)
+
+            st.subheader("Valeurs manquantes par colonne")
+            missing_values = df_uploaded.isnull().sum()
+            missing_percent = (df_uploaded.isnull().sum() / len(df_uploaded)) * 100
+            missing_df = pd.DataFrame({'Nombre de valeurs manquantes': missing_values, 'Pourcentage': missing_percent.round(2)})
             
+            # Filtrer pour n'afficher que les colonnes avec des valeurs manquantes
+            st.dataframe(missing_df[missing_df['Nombre de valeurs manquantes'] > 0].sort_values(by='Pourcentage', ascending=False), use_container_width=True)
+            if missing_df[missing_df['Nombre de valeurs manquantes'] > 0].empty:
+                st.info("Aucune valeur manquante détectée dans ce jeu de données.")
 
+            st.subheader("Types de données par colonne")
+            st.dataframe(df_uploaded.dtypes.astype(str).reset_index().rename(columns={'index': 'Colonne', 0: 'Type de Données'}), use_container_width=True)
 
-            # Charge la configuration depuis le fichier YAML
-            try:
-                with open(config_file_path, "r", encoding="utf-8") as f:
-                    config = yaml.safe_load(f)
-            except FileNotFoundError:
-                st.error(f"Erreur : Le fichier de configuration '{config_file_path}' n'a pas été trouvé.")
-                st.stop() # Arrête l'exécution si le fichier n'est pas là
-            except yaml.YAMLError as e:
-                st.error(f"Erreur lors de la lecture du fichier YAML : {e}")
-                st.stop()
+            # Optionnel : Afficher des histogrammes pour quelques colonnes numériques
+            st.subheader("Distribution de quelques colonnes numériques (pour les 5 premières)")
+            numerical_cols = df_uploaded.select_dtypes(include=['number']).columns
+            if not numerical_cols.empty:
+                for col in numerical_cols[:5]: # Afficher max 5 histogrammes pour ne pas surcharger la page
+                    fig = px.histogram(df_uploaded, x=col, title=f"Distribution de **{col}**")
+                    st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Aucune colonne numérique trouvée pour afficher des distributions.")
 
-        # Génère le rapport avec la configuration chargée
-        # Vous ne passez PLUS 'lang="fr"' ici, car c'est dans le YAML
-        profile = ProfileReport(df, **config) # Utilise l'opérateur ** pour décompresser le dict config
-
-        # Sauvegarde le rapport HTML dans un fichier temporaire
-        st_profile_report(profile)
+        except Exception as e:
+            st.error(f"Une erreur est survenue lors du traitement du fichier : {e}")
+            st.info("Veuillez vous assurer que le fichier est un fichier Excel valide.")
+    else:
+        st.info("Veuillez télécharger un fichier Excel pour commencer l'analyse.")
 
             
 
