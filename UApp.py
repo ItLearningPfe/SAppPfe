@@ -32,7 +32,7 @@ st.markdown(
 
     /* Styles pour les Selectbox de Streamlit (les filtres) */
     .stSelectbox {
-        background-color: white; /* Fond blanc */
+        background-color: white !important; /* Fond blanc */
         border: 1px solid #e0e0e0; /* Bordure fine grise */
         border-radius: 8px; /* Coins arrondis */
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Légère ombre */
@@ -44,7 +44,7 @@ st.markdown(
     }
     .stSelectbox div[data-baseweb="select"] .st-cq {
         color: #333333; /* Texte bleu clair */
-        background-color: white; /* Fond blanc */
+        background-color: white !important; /* Fond blanc */
         font-weight: 600; /* Plus gras */
         font-size: 1em; /* Taille du texte */
         border: none !important;
@@ -102,7 +102,7 @@ st.markdown(
         padding: 20px; /* Espace intérieur */
         margin-bottom: 30px; 
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); 
-        background-color: white; 
+        background-color: white !important; 
    }
 
 
@@ -112,7 +112,7 @@ st.markdown(
         padding: 20px;
         margin-bottom: 30px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        background-color: white;
+        background-color: white !important;
     }
 
 
@@ -121,7 +121,7 @@ st.markdown(
         border: none !important;
         border-radius: 12px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        background-color: white;
+        background-color: white !important;
         padding: 20px;
     }
     /* Styles pour les en-têtes du tableau */
@@ -167,7 +167,7 @@ st.markdown(
         padding: 20px;
         margin-bottom: 30px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        background-color: white;
+        background-color: white !important;
     }
 }
     </style>
