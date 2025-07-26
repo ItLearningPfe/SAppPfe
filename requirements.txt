@@ -71,3 +71,4 @@ visions==0.7.5
 watchdog==6.0.0
 wordcloud==1.9.4
 scipy
+numpy
