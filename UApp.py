@@ -266,10 +266,10 @@ with tab1:
     total_impayés_locataires_partis = round(df_plot_tab1['SOLDE_DU_CLIENT'].sum(), 2)
     total_impayés = round(df_impayés[df_impayés['SOLDE_DU_CLIENT'] > 0]['SOLDE_DU_CLIENT'].sum(), 2)
     moyenne_impayés_par_locataire = round(df_plot_tab1['SOLDE_DU_CLIENT'].mean(), 2)
-    mediane_impayes = round(df_impayés['SOLDE_DU_CLIENT'].median(), 2)
-    ecart_type_impayes = round(df_impayés['SOLDE_DU_CLIENT'].std(), 2)
-    min_impayes = round(df_impayés['SOLDE_DU_CLIENT'].min(), 2)
-    max_impayes = round(df_impayés['SOLDE_DU_CLIENT'].max(), 2)
+    mediane_impayes = round(df_plot_tab1['SOLDE_DU_CLIENT'].median(), 2)
+    ecart_type_impayes = round(df_plot_tab1['SOLDE_DU_CLIENT'].std(), 2)
+    min_impayes = round(df_plot_tab1['SOLDE_DU_CLIENT'].min(), 2)
+    max_impayes = round(df_plot_tab1['SOLDE_DU_CLIENT'].max(), 2)
     pourcentage_locataires_partis = (total_impayés_locataires_partis / total_impayés * 100) if total_impayés > 0 else 0
 
     dataset_impayés_mois=df_plot_tab1.groupby(['SORTIE_MOIS'])['SOLDE_DU_CLIENT'].sum().reset_index()
@@ -453,24 +453,6 @@ with tab2:
 
 
 with tab3:
-        
-    # Affichage des KPI
-    col6, col7, col8, col9 = st.columns([1,1,1,1])
-
-    
-
-    with col6:
-        st.markdown(custom_kpi_card("Médiane Impayés", f"{mediane_impayes}€", "kpi-pink"), unsafe_allow_html=True)
-
-    with col7:
-        st.markdown(custom_kpi_card("Écart-type Impayés", f"{ecart_type_impayes}€", "kpi-green"), unsafe_allow_html=True)
-
-    with col8:
-        st.markdown(custom_kpi_card("Min Impayés", f"{min_impayes}€", "kpi-blue"), unsafe_allow_html=True)
-
-    with col9:
-        st.markdown(custom_kpi_card("Max Impayés", f"{max_impayes}€", "kpi-salmon"), unsafe_allow_html=True)
-
        
   # Analyse des liaisons avec les impayés
     st.markdown("<h3 style='color: gray;'>Analyse des liaisons avec les impayés</h3>", unsafe_allow_html=True)
