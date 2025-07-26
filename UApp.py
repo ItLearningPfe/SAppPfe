@@ -391,6 +391,7 @@ with tab2:
     #Groupement des données par type de bail
     filtre_bail_tab2 = df_plot_tab2.groupby('BAIL_TYPE')['SOLDE_DU_CLIENT'].sum().reset_index()
     with col_pie:
+        df_plot_tab2['Civilité'] = df_plot_tab2['Civilité'].astype(str).str.strip().str.capitalize()
         plot_pie=px.pie(
             df_plot_tab2,
             names='Civilité',
