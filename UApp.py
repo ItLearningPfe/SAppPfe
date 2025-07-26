@@ -452,7 +452,7 @@ with tab3:
         st.markdown("<h3 style='color: gray;'>Analyse des liaisons avec les impayés</h3>", unsafe_allow_html=True)
 
     # On met toutes les variables dans un seul selectbox
-    nom_affichage_vars = {
+        nom_affichage_vars = {
         'Civilité_Regroupee': 'Civilité',
         'PERIODICITE_APPEL_M_T_S_A': "Périodicité d'appel",
         'BAIL_TYPE': 'Type de bail',
@@ -462,30 +462,30 @@ with tab3:
         'Duree_Occupation':"Durée d'occupation (mois)",  
     }
 
-    variable_selection = st.selectbox("Choisissez une variable à analyser", options=list(nom_affichage_vars.values()))
-    var_cat = [k for k, v in nom_affichage_vars.items() if v == variable_selection][0]
+        variable_selection = st.selectbox("Choisissez une variable à analyser", options=list(nom_affichage_vars.values()))
+        var_cat = [k for k, v in nom_affichage_vars.items() if v == variable_selection][0]
 
-    min_clients_threshold = st.slider(
+        min_clients_threshold = st.slider(
         "Filtrer les modalités avec peu de clients (minimum de clients par catégorie)",
         min_value=1, max_value=200, value=10)
 
-    df_filtre = df_impayés.copy()
-    df_filtre = df_filtre[df_filtre[var_cat].notna() & df_filtre['Est_Impaye'].notna()]
+        df_filtre = df_impayés.copy()
+        df_filtre = df_filtre[df_filtre[var_cat].notna() & df_filtre['Est_Impaye'].notna()]
 
-    if var_cat == 'Lieu_Origine':
-        df_filtre = df_filtre[df_filtre['Lieu_Origine'] != 'inconnu']
+        if var_cat == 'Lieu_Origine':
+            df_filtre = df_filtre[df_filtre['Lieu_Origine'] != 'inconnu']
 
-    # Pour durée d'occupation, pas de filtre sur seuil car c'est continu
-    if var_cat != 'Duree_Occupation':
-        valeurs_valides = df_filtre[var_cat].value_counts()[lambda x: x >= min_clients_threshold].index
-        df_filtre = df_filtre[df_filtre[var_cat].isin(valeurs_valides)]
+        # Pour durée d'occupation, pas de filtre sur seuil car c'est continu
+        if var_cat != 'Duree_Occupation':
+            valeurs_valides = df_filtre[var_cat].value_counts()[lambda x: x >= min_clients_threshold].index
+            df_filtre = df_filtre[df_filtre[var_cat].isin(valeurs_valides)]
 
-    if df_filtre.empty:
-        st.warning("Pas assez de données après filtrage.")
-    else:
-        # Graphique empilé 100% pour toutes les variables, y compris durée d'occupation
-        df_bar = df_filtre.copy()
-        df_bar['Est_Impaye'] = df_bar['Est_Impaye'].map({0: 'Payé', 1: 'Impayé'})
+        if df_filtre.empty:
+            st.warning("Pas assez de données après filtrage.")
+        else:
+            # Graphique empilé 100% pour toutes les variables, y compris durée d'occupation
+            df_bar = df_filtre.copy()
+            df_bar['Est_Impaye'] = df_bar['Est_Impaye'].map({0: 'Payé', 1: 'Impayé'})
 
         if var_cat == 'Duree_Occupation':
             # Pour la durée, on va regrouper en bins (ex: tranches) pour faire un empilé lisible
