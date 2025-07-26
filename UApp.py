@@ -266,7 +266,10 @@ with tab1:
     total_impayés_locataires_partis = round(df_plot_tab1['SOLDE_DU_CLIENT'].sum(), 2)
     total_impayés = round(df_impayés[df_impayés['SOLDE_DU_CLIENT'] > 0]['SOLDE_DU_CLIENT'].sum(), 2)
     moyenne_impayés_par_locataire = round(df_plot_tab1['SOLDE_DU_CLIENT'].mean(), 2)
-
+    mediane_impayes = round(df_plot_tab1['SOLDE_DU_CLIENT'].median(), 2)
+    ecart_type_impayes = round(df_plot_tab1['SOLDE_DU_CLIENT'].std(), 2)
+    min_impayes = round(df_plot_tab1['SOLDE_DU_CLIENT'].min(), 2)
+    max_impayes = round(df_plot_tab1['SOLDE_DU_CLIENT'].max(), 2)
     pourcentage_locataires_partis = (total_impayés_locataires_partis / total_impayés * 100) if total_impayés > 0 else 0
 
     dataset_impayés_mois=df_plot_tab1.groupby(['SORTIE_MOIS'])['SOLDE_DU_CLIENT'].sum().reset_index()
