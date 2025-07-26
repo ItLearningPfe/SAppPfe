@@ -288,17 +288,7 @@ with tab1:
     with col5:
         st.markdown(custom_kpi_card("Pourcentage Impayés Partis", f"{pourcentage_locataires_partis:.2f} %", "kpi-blue"), unsafe_allow_html=True)
 
-    with col6:
-        st.markdown(custom_kpi_card("Médiane Impayés", f"{mediane_impayes}€", "kpi-pink"), unsafe_allow_html=True)
-
-    with col7:
-        st.markdown(custom_kpi_card("Écart-type Impayés", f"{ecart_type_impayes}€", "kpi-green"), unsafe_allow_html=True)
-
-    with col8:
-        st.markdown(custom_kpi_card("Min Impayés", f"{min_impayes}€", "kpi-blue"), unsafe_allow_html=True)
-
-    with col9:
-        st.markdown(custom_kpi_card("Max Impayés", f"{max_impayes}€", "kpi-salmon"), unsafe_allow_html=True)
+ 
 
     # Graphique des impayés par mois 
     fig = px.line(
@@ -463,6 +453,24 @@ with tab2:
 
 
 with tab3:
+        
+    # Affichage des KPI
+    col6, col7, col8, col9 = st.columns([1,1,1,1])
+
+    
+
+    with col6:
+        st.markdown(custom_kpi_card("Médiane Impayés", f"{mediane_impayes}€", "kpi-pink"), unsafe_allow_html=True)
+
+    with col7:
+        st.markdown(custom_kpi_card("Écart-type Impayés", f"{ecart_type_impayes}€", "kpi-green"), unsafe_allow_html=True)
+
+    with col8:
+        st.markdown(custom_kpi_card("Min Impayés", f"{min_impayes}€", "kpi-blue"), unsafe_allow_html=True)
+
+    with col9:
+        st.markdown(custom_kpi_card("Max Impayés", f"{max_impayes}€", "kpi-salmon"), unsafe_allow_html=True)
+
         st.markdown("<h3 style='color: gray;'>Analyse des liaisons avec les impayés</h3>", unsafe_allow_html=True)
 
     # On met toutes les variables dans un seul selectbox
