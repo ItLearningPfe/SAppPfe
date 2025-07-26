@@ -471,198 +471,199 @@ with tab3:
     with col9:
         st.markdown(custom_kpi_card("Max Impayés", f"{max_impayes}€", "kpi-salmon"), unsafe_allow_html=True)
 
-        st.markdown("<h3 style='color: gray;'>Analyse des liaisons avec les impayés</h3>", unsafe_allow_html=True)
+       
+    
+st.markdown("<h3 style='color: gray;'>Analyse des liaisons avec les impayés</h3>", unsafe_allow_html=True)
 
     # On met toutes les variables dans un seul selectbox
-        nom_affichage_vars = {
-        'Civilité_Regroupee': 'Civilité',
-        'PERIODICITE_APPEL_M_T_S_A': "Périodicité d'appel",
-        'BAIL_TYPE': 'Type de bail',
-        'VILLE_4': 'Ville',
-        'NOM_IMMEUBLE':'Résidence',
-        'Lieu_Origine':"Lieu de naissance",
-        'Duree_Occupation':"Durée d'occupation (mois)",  
-    }
+nom_affichage_vars = {
+    'Civilité_Regroupee': 'Civilité',
+    'PERIODICITE_APPEL_M_T_S_A': "Périodicité d'appel",
+    'BAIL_TYPE': 'Type de bail',
+    'VILLE_4': 'Ville',
+    'NOM_IMMEUBLE':'Résidence',
+    'Lieu_Origine':"Lieu de naissance",
+    'Duree_Occupation':"Durée d'occupation (mois)",  
+}
 
-        variable_selection = st.selectbox("Choisissez une variable à analyser", options=list(nom_affichage_vars.values()))
-        var_cat = [k for k, v in nom_affichage_vars.items() if v == variable_selection][0]
+variable_selection = st.selectbox("Choisissez une variable à analyser", options=list(nom_affichage_vars.values()))
+var_cat = [k for k, v in nom_affichage_vars.items() if v == variable_selection][0]
 
-        min_clients_threshold = st.slider(
-        "Filtrer les modalités avec peu de clients (minimum de clients par catégorie)",
-        min_value=1, max_value=200, value=10)
+min_clients_threshold = st.slider(
+    "Filtrer les modalités avec peu de clients (minimum de clients par catégorie)",
+    min_value=1, max_value=200, value=10)
 
-        df_filtre = df_impayés.copy()
-        df_filtre = df_filtre[df_filtre[var_cat].notna() & df_filtre['Est_Impaye'].notna()]
+df_filtre = df_impayés.copy()
+df_filtre = df_filtre[df_filtre[var_cat].notna() & df_filtre['Est_Impaye'].notna()]
 
-        if var_cat == 'Lieu_Origine':
-            df_filtre = df_filtre[df_filtre['Lieu_Origine'] != 'inconnu']
+if var_cat == 'Lieu_Origine':
+    df_filtre = df_filtre[df_filtre['Lieu_Origine'] != 'inconnu']
 
-        # Pour durée d'occupation, pas de filtre sur seuil car c'est continu
-        if var_cat != 'Duree_Occupation':
-            valeurs_valides = df_filtre[var_cat].value_counts()[lambda x: x >= min_clients_threshold].index
-            df_filtre = df_filtre[df_filtre[var_cat].isin(valeurs_valides)]
+# Pour durée d'occupation, pas de filtre sur seuil car c'est continu
+if var_cat != 'Duree_Occupation':
+    valeurs_valides = df_filtre[var_cat].value_counts()[lambda x: x >= min_clients_threshold].index
+    df_filtre = df_filtre[df_filtre[var_cat].isin(valeurs_valides)]
 
-        if df_filtre.empty:
-            st.warning("Pas assez de données après filtrage.")
+if df_filtre.empty:
+    st.warning("Pas assez de données après filtrage.")
+else:
+    # Graphique empilé 100% pour toutes les variables, y compris durée d'occupation
+    df_bar = df_filtre.copy()
+    df_bar['Est_Impaye'] = df_bar['Est_Impaye'].map({0: 'Payé', 1: 'Impayé'})
+
+    if var_cat == 'Duree_Occupation':
+        # Pour la durée, on va regrouper en bins (ex: tranches) pour faire un empilé lisible
+        bins = [0, 3, 6, 12, 24, 36, 48, 60, 100]
+        labels = ['0-3', '4-6', '7-12', '13-24', '25-36', '37-48', '49-60', '61+']
+        df_bar['Duree_Bin'] = pd.cut(df_bar['Duree_Occupation'], bins=bins, labels=labels, right=False)
+        distrib = pd.crosstab(df_bar['Duree_Bin'], df_bar['Est_Impaye'], normalize='index') * 100
+        distrib = distrib[['Payé', 'Impayé']] if 'Payé' in distrib.columns else distrib[['Impayé']]
+        x_axis = 'Duree_Bin'
+        titre = "Répartition des impayés selon la durée d'occupation (mois)"
+        x_label = "Tranches de durée (mois)"
+    else:
+        distrib = pd.crosstab(df_bar[var_cat], df_bar['Est_Impaye'], normalize='index') * 100
+        distrib = distrib[['Payé', 'Impayé']] if 'Payé' in distrib.columns else distrib[['Impayé']]
+        x_axis = var_cat
+        titre = f"Répartition des impayés selon {variable_selection}"
+        x_label = variable_selection
+
+    fig_bar = go.Figure()
+    for statut, color in zip(distrib.columns, ['green', 'red']):
+        fig_bar.add_trace(go.Bar(
+            x=distrib.index,
+            y=distrib[statut],
+            name=statut,
+            text=distrib[statut].apply(lambda x: f"{x:.1f}%"),
+            textposition='auto',
+            marker_color=color,
+            hovertemplate=f"{statut} : %{{y:.1f}}%<extra></extra>",
+        ))
+
+    fig_bar.update_layout(
+        barmode='stack',
+        xaxis_title=x_label,
+        yaxis_title="Répartition (%)",
+        title=titre,
+        template='simple_white',
+        legend_title="Statut",
+        height=400,
+        margin=dict(t=40, b=40, l=40, r=40)
+    )
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+    # Pour les variables catégorielles on affiche tableau et tests classiques
+    if var_cat != 'Duree_Occupation':
+        contingency = pd.crosstab(df_filtre[var_cat], df_filtre['Est_Impaye'])
+        contingency_percent = contingency.div(contingency.sum(axis=1), axis=0) * 100
+        contingency_display = contingency.copy()
+        contingency_display["% Impayé"] = contingency_percent.get(1, 0).round(2)
+        contingency_display["% Payé"] = contingency_percent.get(0, 0).round(2)
+        contingency_display["Total Clients"] = contingency.sum(axis=1)
+        contingency_display.rename(columns={0: "Payé", 1: "Impayé"}, inplace=True)
+        st.dataframe(contingency_display)
+
+        # Test Khi2 etc.
+        chi2, p, dof, expected = chi2_contingency(contingency)
+        n = contingency.sum().sum()
+        phi2 = chi2 / n
+        r, k = contingency.shape
+        v_cramer = np.sqrt(phi2 / min(k - 1, r - 1))
+        t_tschuprow = np.sqrt(phi2 / np.sqrt((r - 1) * (k - 1)))
+
+        if v_cramer < 0.05:
+            niveau = "(négligeable)"
+        elif 0.05 < v_cramer <= 0.10:
+            niveau = "(faible)"
+        elif 0.10 < v_cramer <= 0.25:
+            niveau = "(modéré)"
+        elif 0.25 < v_cramer <= 0.5:
+            niveau = "(fort)"
         else:
-            # Graphique empilé 100% pour toutes les variables, y compris durée d'occupation
-            df_bar = df_filtre.copy()
-            df_bar['Est_Impaye'] = df_bar['Est_Impaye'].map({0: 'Payé', 1: 'Impayé'})
+            niveau = "(très fort)"
 
-        if var_cat == 'Duree_Occupation':
-            # Pour la durée, on va regrouper en bins (ex: tranches) pour faire un empilé lisible
-            bins = [0, 3, 6, 12, 24, 36, 48, 60, 100]
-            labels = ['0-3', '4-6', '7-12', '13-24', '25-36', '37-48', '49-60', '61+']
-            df_bar['Duree_Bin'] = pd.cut(df_bar['Duree_Occupation'], bins=bins, labels=labels, right=False)
-            distrib = pd.crosstab(df_bar['Duree_Bin'], df_bar['Est_Impaye'], normalize='index') * 100
-            distrib = distrib[['Payé', 'Impayé']] if 'Payé' in distrib.columns else distrib[['Impayé']]
-            x_axis = 'Duree_Bin'
-            titre = "Répartition des impayés selon la durée d'occupation (mois)"
-            x_label = "Tranches de durée (mois)"
+        col1, col2, col3 = st.columns(3)
+        col1.write(f"**p-value :** {p:.4f} {'(Lien significatif)' if p < 0.05 else '(Lien non significatif)'}")
+        col2.write(f"**V de Cramer :** {v_cramer:.3f} {niveau}")
+        col3.write(f"**T de Tschuprow :** {t_tschuprow:.3f} (plus robuste)")
+
+        if p < 0.05:
+            st.success(f"La variable **{variable_selection}** a une liaison statistique significative avec les impayés.")
         else:
-            distrib = pd.crosstab(df_bar[var_cat], df_bar['Est_Impaye'], normalize='index') * 100
-            distrib = distrib[['Payé', 'Impayé']] if 'Payé' in distrib.columns else distrib[['Impayé']]
-            x_axis = var_cat
-            titre = f"Répartition des impayés selon {variable_selection}"
-            x_label = variable_selection
+            st.info(f"Aucune liaison significative détectée entre **{variable_selection}** et les impayés.")
 
-        fig_bar = go.Figure()
-        for statut, color in zip(distrib.columns, ['green', 'red']):
-            fig_bar.add_trace(go.Bar(
-                x=distrib.index,
-                y=distrib[statut],
-                name=statut,
-                text=distrib[statut].apply(lambda x: f"{x:.1f}%"),
-                textposition='auto',
-                marker_color=color,
-                hovertemplate=f"{statut} : %{{y:.1f}}%<extra></extra>",
-            ))
+    else:
+        # Cas Duree_Occupation : boxplot + tests spécifiques
+        st.markdown("### Analyse quantitative spécifique : durée d’occupation")
 
-        fig_bar.update_layout(
-            barmode='stack',
-            xaxis_title=x_label,
-            yaxis_title="Répartition (%)",
-            title=titre,
-            template='simple_white',
-            legend_title="Statut",
-            height=400,
-            margin=dict(t=40, b=40, l=40, r=40)
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
+        df_clean = df_impayés[['Duree_Occupation', 'Est_Impaye']].dropna()
+        df_clean = df_clean[df_clean['Duree_Occupation'] <= 100]
 
-        # Pour les variables catégorielles on affiche tableau et tests classiques
-        if var_cat != 'Duree_Occupation':
-            contingency = pd.crosstab(df_filtre[var_cat], df_filtre['Est_Impaye'])
-            contingency_percent = contingency.div(contingency.sum(axis=1), axis=0) * 100
-            contingency_display = contingency.copy()
-            contingency_display["% Impayé"] = contingency_percent.get(1, 0).round(2)
-            contingency_display["% Payé"] = contingency_percent.get(0, 0).round(2)
-            contingency_display["Total Clients"] = contingency.sum(axis=1)
-            contingency_display.rename(columns={0: "Payé", 1: "Impayé"}, inplace=True)
-            st.dataframe(contingency_display)
+        df_boxplot = df_clean.copy()
+        df_boxplot['Statut'] = df_boxplot['Est_Impaye'].map({0: 'Payé', 1: 'Impayé'})
 
-            # Test Khi2 etc.
-            chi2, p, dof, expected = chi2_contingency(contingency)
-            n = contingency.sum().sum()
-            phi2 = chi2 / n
-            r, k = contingency.shape
-            v_cramer = np.sqrt(phi2 / min(k - 1, r - 1))
-            t_tschuprow = np.sqrt(phi2 / np.sqrt((r - 1) * (k - 1)))
+        fig_box = px.box(df_boxplot, x='Statut', y='Duree_Occupation',
+                         color='Statut', color_discrete_map={'Payé': "green", 'Impayé': "red"},
+                         labels={'Statut': 'Statut', 'Duree_Occupation': "Durée d'occupation (mois)"},
+                         title="Distribution de la durée d’occupation (mois) selon le statut d’impayé")
+        st.plotly_chart(fig_box, use_container_width=True)
 
-            if v_cramer < 0.05:
-                niveau = "(négligeable)"
-            elif 0.05 < v_cramer <= 0.10:
-                niveau = "(faible)"
-            elif 0.10 < v_cramer <= 0.25:
-                niveau = "(modéré)"
-            elif 0.25 < v_cramer <= 0.5:
-                niveau = "(fort)"
-            else:
-                niveau = "(très fort)"
+        mois_payes = df_clean[df_clean['Est_Impaye'] == 0]['Duree_Occupation']
+        mois_impayes = df_clean[df_clean['Est_Impaye'] == 1]['Duree_Occupation']
 
-            col1, col2, col3 = st.columns(3)
-            col1.write(f"**p-value :** {p:.4f} {'(Lien significatif)' if p < 0.05 else '(Lien non significatif)'}")
-            col2.write(f"**V de Cramer :** {v_cramer:.3f} {niveau}")
-            col3.write(f"**T de Tschuprow :** {t_tschuprow:.3f} (plus robuste)")
+        pval_shapiro_payes = shapiro(mois_payes).pvalue
+        pval_shapiro_impayes = shapiro(mois_impayes).pvalue
+        stat_mw, pval_mw = mannwhitneyu(mois_payes, mois_impayes, alternative='two-sided')
 
-            if p < 0.05:
-                st.success(f"La variable **{variable_selection}** a une liaison statistique significative avec les impayés.")
-            else:
-                st.info(f"Aucune liaison significative détectée entre **{variable_selection}** et les impayés.")
+        col1, col2 = st.columns(2)
+        col1.markdown(f"**Test de normalité (Shapiro-Wilk)**<br>Payés p={pval_shapiro_payes:.4f}<br>Impayés p={pval_shapiro_impayes:.4f}", unsafe_allow_html=True)
+        col2.markdown(f"**Test Mann-Whitney U**<br>Stat = {stat_mw:.3f}<br>p = {pval_mw:.4f}", unsafe_allow_html=True)
 
+        if pval_mw < 0.05:
+            st.success("Différence significative entre durée d’occupation des payeurs et des impayés.")
         else:
-            # Cas Duree_Occupation : boxplot + tests spécifiques
-            st.markdown("### Analyse quantitative spécifique : durée d’occupation")
-
-            df_clean = df_impayés[['Duree_Occupation', 'Est_Impaye']].dropna()
-            df_clean = df_clean[df_clean['Duree_Occupation'] <= 100]
-
-            df_boxplot = df_clean.copy()
-            df_boxplot['Statut'] = df_boxplot['Est_Impaye'].map({0: 'Payé', 1: 'Impayé'})
-
-            fig_box = px.box(df_boxplot, x='Statut', y='Duree_Occupation',
-                             color='Statut', color_discrete_map={'Payé': "green", 'Impayé': "red"},
-                             labels={'Statut': 'Statut', 'Duree_Occupation': "Durée d'occupation (mois)"},
-                             title="Distribution de la durée d’occupation (mois) selon le statut d’impayé")
-            st.plotly_chart(fig_box, use_container_width=True)
-
-            mois_payes = df_clean[df_clean['Est_Impaye'] == 0]['Duree_Occupation']
-            mois_impayes = df_clean[df_clean['Est_Impaye'] == 1]['Duree_Occupation']
-
-            pval_shapiro_payes = shapiro(mois_payes).pvalue
-            pval_shapiro_impayes = shapiro(mois_impayes).pvalue
-            stat_mw, pval_mw = mannwhitneyu(mois_payes, mois_impayes, alternative='two-sided')
-
-            col1, col2 = st.columns(2)
-            col1.markdown(f"**Test de normalité (Shapiro-Wilk)**<br>Payés p={pval_shapiro_payes:.4f}<br>Impayés p={pval_shapiro_impayes:.4f}", unsafe_allow_html=True)
-            col2.markdown(f"**Test Mann-Whitney U**<br>Stat = {stat_mw:.3f}<br>p = {pval_mw:.4f}", unsafe_allow_html=True)
-
-            if pval_mw < 0.05:
-                st.success("Différence significative entre durée d’occupation des payeurs et des impayés.")
-            else:
-                st.info("Aucune différence significative détectée entre les groupes.")
-        # -----------------------------------------
+            st.info("Aucune différence significative détectée entre les groupes.")
+    # -----------------------------------------
     # Calcul du top 5 des pires modalités (par taux d’impayé)
-        def analyse_par_variable(df, variable, min_clients=20):
-            total_par_modalite = df[variable].value_counts().rename("Total_clients")
-            impayes = df[(df["Est_Impaye"] == 1) & (df["SOLDE_DU_CLIENT"] > 0)]
+    def analyse_par_variable(df, variable, min_clients=20):
+        total_par_modalite = df[variable].value_counts().rename("Total_clients")
+        impayes = df[(df["Est_Impaye"] == 1) & (df["SOLDE_DU_CLIENT"] > 0)]
 
-            impayes_groupes = impayes.groupby(variable).agg(
-                Nb_impayes=('Est_Impaye', 'count'),
-                Solde_moyen=('SOLDE_DU_CLIENT', 'mean'),
-                Solde_total=('SOLDE_DU_CLIENT', 'sum')
-            )
+        impayes_groupes = impayes.groupby(variable).agg(
+            Nb_impayes=('Est_Impaye', 'count'),
+            Solde_moyen=('SOLDE_DU_CLIENT', 'mean'),
+            Solde_total=('SOLDE_DU_CLIENT', 'sum')
+        )
 
-            result = pd.concat([total_par_modalite, impayes_groupes], axis=1).fillna(0)
-            result["Taux_impayes (%)"] = (result["Nb_impayes"] / result["Total_clients"]) * 100
-            result = result[result["Total_clients"] >= min_clients]
-            result = result.sort_values(by="Taux_impayes (%)", ascending=False)
+        result = pd.concat([total_par_modalite, impayes_groupes], axis=1).fillna(0)
+        result["Taux_impayes (%)"] = (result["Nb_impayes"] / result["Total_clients"]) * 100
+        result = result[result["Total_clients"] >= min_clients]
+        result = result.sort_values(by="Taux_impayes (%)", ascending=False)
 
-            return result.round(2)
-        df_top5 = analyse_par_variable(df_impayés, var_cat, min_clients_threshold)
+        return result.round(2)
+    df_top5 = analyse_par_variable(df_impayés, var_cat, min_clients_threshold)
 
-        if not df_top5.empty:
-            def style_top5(df):
-                styled_df = df.style\
-                    .background_gradient(subset=["Taux_impayes (%)"], cmap="Reds")\
-                    .format({
-                        "Taux_impayes (%)": "{:.2f} %",
-                        "Solde_moyen": "{:,.0f} €",
-                        "Solde_total": "{:,.0f} €",
-                        "Nb_impayes": "{:.0f}",
-                        "Total_clients": "{:.0f}"
-                    })\
-                    .bar(subset=["Taux_impayes (%)"], color="#FF4B4B")
-                
-                return styled_df
-
-            st.markdown("### Top 10 des modalités les plus à risque")
-            st.dataframe(style_top5(df_top5.head(10)), use_container_width=True, height=400)
-
+    if not df_top5.empty:
+        def style_top5(df):
+            styled_df = df.style\
+                .background_gradient(subset=["Taux_impayes (%)"], cmap="Reds")\
+                .format({
+                    "Taux_impayes (%)": "{:.2f} %",
+                    "Solde_moyen": "{:,.0f} €",
+                    "Solde_total": "{:,.0f} €",
+                    "Nb_impayes": "{:.0f}",
+                    "Total_clients": "{:.0f}"
+                })\
+                .bar(subset=["Taux_impayes (%)"], color="#FF4B4B")
             
+            return styled_df
+
+        st.markdown("### Top 10 des modalités les plus à risque")
+        st.dataframe(style_top5(df_top5.head(10)), use_container_width=True, height=400)
+
     
     
-    # --- Contenu de l'onglet Profiling (SANS sidebar) ---
+# --- Contenu de l'onglet Profiling (SANS sidebar) ---
 with tab4:
     st.markdown("### 📊 Rapport de Profilage des Données")
     st.write(
