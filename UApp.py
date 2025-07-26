@@ -274,7 +274,7 @@ with tab1:
    
 
     # Affichage des KPI
-    col3, col4, col5 = st.columns([1,1,1])
+    col3, col4, col5, col6, col7, col8, col9 = st.columns([1,1,1,1,1,1,1])
 
     with col3:
         st.markdown(custom_kpi_card("Total impayés", f"{total_impayés_locataires_partis:,.2f}€".replace(",", " ").replace(".", ",").replace(" ", "."), "kpi-orange"), unsafe_allow_html=True)
@@ -285,6 +285,17 @@ with tab1:
     with col5:
         st.markdown(custom_kpi_card("Pourcentage Impayés Partis", f"{pourcentage_locataires_partis:.2f} %", "kpi-blue"), unsafe_allow_html=True)
 
+    with col6:
+        st.markdown(custom_kpi_card("Médiane Impayés", f"{mediane_impayes}€", "kpi-pink"), unsafe_allow_html=True)
+
+    with col7:
+        st.markdown(custom_kpi_card("Écart-type Impayés", f"{ecart_type_impayes}€", "kpi-green"), unsafe_allow_html=True)
+
+    with col8:
+        st.markdown(custom_kpi_card("Min Impayés", f"{min_impayes}€", "kpi-blue"), unsafe_allow_html=True)
+
+    with col9:
+        st.markdown(custom_kpi_card("Max Impayés", f"{max_impayes}€", "kpi-salmon"), unsafe_allow_html=True)
 
     # Graphique des impayés par mois 
     fig = px.line(
