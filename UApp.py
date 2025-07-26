@@ -472,61 +472,61 @@ with tab3:
         st.markdown(custom_kpi_card("Max Impayés", f"{max_impayes}€", "kpi-salmon"), unsafe_allow_html=True)
 
        
-    
-st.markdown("<h3 style='color: gray;'>Analyse des liaisons avec les impayés</h3>", unsafe_allow_html=True)
+  # Analyse des liaisons avec les impayés
+    st.markdown("<h3 style='color: gray;'>Analyse des liaisons avec les impayés</h3>", unsafe_allow_html=True)
 
     # On met toutes les variables dans un seul selectbox
-nom_affichage_vars = {
-    'Civilité_Regroupee': 'Civilité',
-    'PERIODICITE_APPEL_M_T_S_A': "Périodicité d'appel",
-    'BAIL_TYPE': 'Type de bail',
-    'VILLE_4': 'Ville',
-    'NOM_IMMEUBLE':'Résidence',
-    'Lieu_Origine':"Lieu de naissance",
-    'Duree_Occupation':"Durée d'occupation (mois)",  
-}
+    nom_affichage_vars = {
+        'Civilité_Regroupee': 'Civilité',
+        'PERIODICITE_APPEL_M_T_S_A': "Périodicité d'appel",
+        'BAIL_TYPE': 'Type de bail',
+        'VILLE_4': 'Ville',
+        'NOM_IMMEUBLE':'Résidence',
+        'Lieu_Origine':"Lieu de naissance",
+        'Duree_Occupation':"Durée d'occupation (mois)",  
+    }
 
-variable_selection = st.selectbox("Choisissez une variable à analyser", options=list(nom_affichage_vars.values()))
-var_cat = [k for k, v in nom_affichage_vars.items() if v == variable_selection][0]
+    variable_selection = st.selectbox("Choisissez une variable à analyser", options=list(nom_affichage_vars.values()))
+    var_cat = [k for k, v in nom_affichage_vars.items() if v == variable_selection][0]
 
-min_clients_threshold = st.slider(
-    "Filtrer les modalités avec peu de clients (minimum de clients par catégorie)",
-    min_value=1, max_value=200, value=10)
+    min_clients_threshold = st.slider(
+        "Filtrer les modalités avec peu de clients (minimum de clients par catégorie)",
+        min_value=1, max_value=200, value=10)
 
-df_filtre = df_impayés.copy()
-df_filtre = df_filtre[df_filtre[var_cat].notna() & df_filtre['Est_Impaye'].notna()]
+    df_filtre = df_impayés.copy()
+    df_filtre = df_filtre[df_filtre[var_cat].notna() & df_filtre['Est_Impaye'].notna()]
 
-if var_cat == 'Lieu_Origine':
-    df_filtre = df_filtre[df_filtre['Lieu_Origine'] != 'inconnu']
+    if var_cat == 'Lieu_Origine':
+        df_filtre = df_filtre[df_filtre['Lieu_Origine'] != 'inconnu']
 
-# Pour durée d'occupation, pas de filtre sur seuil car c'est continu
-if var_cat != 'Duree_Occupation':
-    valeurs_valides = df_filtre[var_cat].value_counts()[lambda x: x >= min_clients_threshold].index
-    df_filtre = df_filtre[df_filtre[var_cat].isin(valeurs_valides)]
+    # Pour durée d'occupation, pas de filtre sur seuil car c'est continu
+    if var_cat != 'Duree_Occupation':
+        valeurs_valides = df_filtre[var_cat].value_counts()[lambda x: x >= min_clients_threshold].index
+        df_filtre = df_filtre[df_filtre[var_cat].isin(valeurs_valides)]
 
-if df_filtre.empty:
-    st.warning("Pas assez de données après filtrage.")
-else:
-    # Graphique empilé 100% pour toutes les variables, y compris durée d'occupation
-    df_bar = df_filtre.copy()
-    df_bar['Est_Impaye'] = df_bar['Est_Impaye'].map({0: 'Payé', 1: 'Impayé'})
-
-    if var_cat == 'Duree_Occupation':
-        # Pour la durée, on va regrouper en bins (ex: tranches) pour faire un empilé lisible
-        bins = [0, 3, 6, 12, 24, 36, 48, 60, 100]
-        labels = ['0-3', '4-6', '7-12', '13-24', '25-36', '37-48', '49-60', '61+']
-        df_bar['Duree_Bin'] = pd.cut(df_bar['Duree_Occupation'], bins=bins, labels=labels, right=False)
-        distrib = pd.crosstab(df_bar['Duree_Bin'], df_bar['Est_Impaye'], normalize='index') * 100
-        distrib = distrib[['Payé', 'Impayé']] if 'Payé' in distrib.columns else distrib[['Impayé']]
-        x_axis = 'Duree_Bin'
-        titre = "Répartition des impayés selon la durée d'occupation (mois)"
-        x_label = "Tranches de durée (mois)"
+    if df_filtre.empty:
+        st.warning("Pas assez de données après filtrage.")
     else:
-        distrib = pd.crosstab(df_bar[var_cat], df_bar['Est_Impaye'], normalize='index') * 100
-        distrib = distrib[['Payé', 'Impayé']] if 'Payé' in distrib.columns else distrib[['Impayé']]
-        x_axis = var_cat
-        titre = f"Répartition des impayés selon {variable_selection}"
-        x_label = variable_selection
+        # Graphique empilé 100% pour toutes les variables, y compris durée d'occupation
+        df_bar = df_filtre.copy()
+        df_bar['Est_Impaye'] = df_bar['Est_Impaye'].map({0: 'Payé', 1: 'Impayé'})
+
+        if var_cat == 'Duree_Occupation':
+            # Pour la durée, on va regrouper en bins (ex: tranches) pour faire un empilé lisible
+            bins = [0, 3, 6, 12, 24, 36, 48, 60, 100]
+            labels = ['0-3', '4-6', '7-12', '13-24', '25-36', '37-48', '49-60', '61+']
+            df_bar['Duree_Bin'] = pd.cut(df_bar['Duree_Occupation'], bins=bins, labels=labels, right=False)
+            distrib = pd.crosstab(df_bar['Duree_Bin'], df_bar['Est_Impaye'], normalize='index') * 100
+            distrib = distrib[['Payé', 'Impayé']] if 'Payé' in distrib.columns else distrib[['Impayé']]
+            x_axis = 'Duree_Bin'
+            titre = "Répartition des impayés selon la durée d'occupation (mois)"
+            x_label = "Tranches de durée (mois)"
+        else:
+            distrib = pd.crosstab(df_bar[var_cat], df_bar['Est_Impaye'], normalize='index') * 100
+            distrib = distrib[['Payé', 'Impayé']] if 'Payé' in distrib.columns else distrib[['Impayé']]
+            x_axis = var_cat
+            titre = f"Répartition des impayés selon {variable_selection}"
+            x_label = variable_selection
 
     fig_bar = go.Figure()
     for statut, color in zip(distrib.columns, ['green', 'red']):
