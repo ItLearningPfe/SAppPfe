@@ -199,6 +199,8 @@ df = load_data(dataset_filtrés)
 
 # Liste des années
 annee_unique = df['SORTIE_ANNEE'].unique()
+#tri des années
+annee_unique.sort() 
 
 
 
@@ -275,10 +277,10 @@ with tab1:
     col3, col4, col5 = st.columns([1,1,1])
 
     with col3:
-        st.markdown(custom_kpi_card("Total impayés", f"{total_impayés_locataires_partis}€", "kpi-orange"), unsafe_allow_html=True)
+        st.markdown(custom_kpi_card("Total impayés", f"{total_impayés_locataires_partis:,.2f}€".replace(",", " ").replace(".", ",").replace(" ", "."), "kpi-orange"), unsafe_allow_html=True)
 
     with col4:
-        st.markdown(custom_kpi_card("Moyenne Impayés", f"{moyenne_impayés_par_locataire}€", "kpi-green"), unsafe_allow_html=True)
+        st.markdown(custom_kpi_card("Moyenne Impayés", f"{moyenne_impayés_par_locataire:,.2f}€".replace(",", " ").replace(".", ",").replace(" ", "."), "kpi-green"), unsafe_allow_html=True)
 
     with col5:
         st.markdown(custom_kpi_card("Pourcentage Impayés Partis", f"{pourcentage_locataires_partis:.2f} %", "kpi-blue"), unsafe_allow_html=True)
