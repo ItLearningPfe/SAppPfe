@@ -6,7 +6,7 @@ import streamlit.components.v1 as components
 import os
 import yaml
 from scipy.stats import chi2_contingency
-
+import numpy as np
 
 st.set_page_config(page_title="Tableau de bord", layout="wide")
 
