@@ -248,7 +248,7 @@ with tab1:
     # Filtrage des données pour tab1 : Gérer le placeholder dans le filtre
     # Initialisez df_plot_tab1 pour éviter un UnboundLocalError si aucune condition n'est remplie
     df_plot_tab1 = df.copy() 
-
+    
 
 
     # Vérifiez les sélections et appliquez les filtres
@@ -318,7 +318,9 @@ with tab1:
 
 
     # Affichage des clients
-  
+    df_filtré = df_plot_tab1.loc[:, ['IDENTIFIANT_CLIENT', 'SORTIE_MOIS', 'SORTIE_ANNEE', 'SOLDE_DU_CLIENT', 'NOM_IMMEUBLE', 'BAIL_TYPE']]
+    df_filtré.rename(columns={'IDENTIFIANT_CLIENT': 'Code client', 'SORTIE_MOIS': 'Mois de sortie', 'SORTIE_ANNEE': 'Années de sortie', 'SOLDE_DU_CLIENT': 'Solde du client', 'NOM_IMMEUBLE': 'Nom de l\'immeuble', 'BAIL_TYPE': 'Type de bail'}, inplace=True)
+    st.dataframe(df_filtré, use_container_width=True)
 
     
     
