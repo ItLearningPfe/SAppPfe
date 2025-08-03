@@ -461,7 +461,6 @@ with tab3:
 
     # On met toutes les variables dans un seul selectbox
     nom_affichage_vars = {
-        'Civilité_Regroupee': 'Civilité',
         'PERIODICITE_APPEL_M_T_S_A': "Périodicité d'appel",
         'BAIL_TYPE': 'Type de bail',
         'VILLE_4': 'Ville',
