@@ -329,7 +329,7 @@ with tab1:
 with tab2:
     # Pour le filtre de l'année dans tab2, faites de même
     filtre_annee_tab2 = st.selectbox(
-        "Sélectionnez l'année", 
+        "La période d'analyse", 
         annee_options, # Utilisez la liste avec le placeholder
         index=0,       # Le placeholder est le premier élément (index 0)
         label_visibility="collapsed", 
@@ -337,7 +337,7 @@ with tab2:
     )
 
     # Filtrage des données pour tab2 - Gérer le placeholder
-    if filtre_annee_tab2 == 'Sélectionner l\'année':
+    if filtre_annee_tab2 == 'La période d\'analyse':
         df_plot_tab2 = df.copy() # Pas de filtre sur l'année si le placeholder est sélectionné
     else:
         df_plot_tab2 = df[df["SORTIE_ANNEE"] == filtre_annee_tab2]
@@ -402,7 +402,7 @@ with tab2:
             df_plot_tab2,
             names='Civilité',
             values='SOLDE_DU_CLIENT',
-            title=f"Répartition des Impayés par Résidence pour l'année {filtre_annee_tab2}",
+            title=f"Répartition des Impayés par Résidence pour {filtre_annee_tab2}",
             hole=0.3,
             color_discrete_sequence=px.colors.sequential.RdBu
         )
@@ -414,7 +414,7 @@ with tab2:
             data_frame=filtre_bail_tab2,
             x='BAIL_TYPE',
             y='SOLDE_DU_CLIENT',
-            title=f"Total des Impayés par Type de Bail pour l'année {filtre_annee_tab2}"
+            title=f"Total des Impayés par Type de Bail pour {filtre_annee_tab2}"
             )
         st.plotly_chart(plot_bar)  # Afficher le graphique à barres
 
@@ -441,7 +441,7 @@ with tab2:
     hover_data={'CODE_POSTAL_3': True, 'SOLDE_DU_CLIENT': ':,.2f €'}, # Détails au survol
     zoom=5,                         # Zoom initial (4 est souvent trop dézoomé pour la France)
     height=700,                     # Augmente la hauteur de la carte
-    title=f"Carte des Impayés par Ville pour l'année {filtre_annee_tab2}",
+    title=f"Carte des Impayés par Ville pour {filtre_annee_tab2}",
     mapbox_style='open-street-map', # Utilise le style déterminé ci-dessus (Mapbox ou OSM)
     color_continuous_scale=px.colors.sequential.Viridis, # Nouvelle palette de couleurs (Plasma, Viridis, Inferno, Magma)
     opacity=0.6                     # Rend les points légèrement transparents pour voir les chevauchements
@@ -465,8 +465,7 @@ with tab3:
         'BAIL_TYPE': 'Type de bail',
         'VILLE_4': 'Ville',
         'NOM_IMMEUBLE':'Résidence',
-        'Lieu_Origine':"Lieu de naissance",
-        'Duree_Occupation':"Durée d'occupation (mois)",  
+        'Lieu_Origine':"Lieu de naissance" 
     }
 
     variable_selection = st.selectbox("Choisissez une variable à analyser", options=list(nom_affichage_vars.values()))
@@ -853,7 +852,7 @@ with tab4:
                     # Statistiques de base pour les numériques
                     if pd.api.types.is_numeric_dtype(series):
                         st.markdown("### **Statistiques Numériques**")
-                        st.markdown(f"**Moyenne :** `{series.mean():.2f}`")
+                        st.markdown(f"**Moyenne :** `{series.mean() if not series.empty else 0:.2f}`")
                         st.markdown(f"**Médiane :** `{series.median():.2f}`")
                         st.markdown(f"**Écart-type :** `{series.std():.2f}`")
                         st.markdown(f"**Min :** `{series.min()}`")
